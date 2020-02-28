@@ -2,13 +2,13 @@
 
 using namespace eeduro::delta;
 
-ShuffleSequence::ShuffleSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration, DeltaSafetyProperties &properties) :
+ShuffleSequence::ShuffleSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration) :
 	Sequence(name, caller, true),
 	move("move", this, controlSys),
-	detectSequence("detect sequence", controlSys, this, calibration),
-	moveBlock("moveBlock", controlSys, this, calibration),
+	detectSequence("detect sequence", this, controlSys, calibration),
+	moveBlock("moveBlock", this, controlSys, calibration),
 	controlSys(controlSys),
-	calibration(calibration){}
+	calibration(calibration) { }
 	
 
 int ShuffleSequence::action() {

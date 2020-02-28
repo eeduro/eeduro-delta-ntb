@@ -21,17 +21,17 @@ namespace eeduro {
 	namespace delta {
 		class SortSequence : public Sequence {
 			public:
-				SortSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration, DeltaSafetyProperties &properties);
+				SortSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration);
 				int action();
 
 			private:
 				virtual int find(const std::array<int,4> &blocks, int block);
 				
 				DeltaControlSystem& controlSys;
-				Calibration& calibration;
 				Move move;
-				DetectSequence detectSequence;
-				MoveBlockSequence moveBlock;
+				DetectSequence detectSeq;
+				MoveBlockSequence moveBlockSeq;
+				Calibration& calibration;
 		};
 	}
 }

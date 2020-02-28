@@ -2,33 +2,26 @@
 
 using namespace eeduro::delta;
 
-SortSequence::SortSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration, DeltaSafetyProperties &properties):
+SortSequence::SortSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration):
 	Sequence(name, caller, true),
 	move("move", this, controlSys),
-	detectSequence("detect sequence", controlSys, this, calibration),
-	moveBlock("moveBlock", controlSys, this, calibration),
+	detectSeq("detect sequence", this, controlSys, calibration),
+	moveBlockSeq("moveBlock", this, controlSys, calibration),
 	controlSys(controlSys),
-	calibration(calibration){}
+	calibration(calibration) { }
 
 int SortSequence::action() {
 	std::array<int,4> blocks;
 	// detect positions of all blocks
 	for (int i = 0; i < 4; i++) {
 		AxisVector p = {calibration.position[i].x, calibration.position[i].y, calibration.transportation_height, 0};
-
 		move(p);
-		
-		blocks[i] = detectSequence(i);
-		
+		blocks[i] = detectSeq(i);
 	}
 
-	{
-		auto l = log.trace();
-		l << "detected blocks:";
-		for (int i = 0; i < 4; i++) {
-			l << " " << blocks[i];
-		}
-	}
+	auto l = log.info();
+	l << "detected blocks:";
+	for (int i = 0; i < 4; i++) l << " " << blocks[i];
 	
 	// check for invalid values
 	bool block_ok[4];
@@ -83,7 +76,7 @@ int SortSequence::action() {
 			}
 			
 			log.info() << "move block from position " << correct_position << " to " << wrong_position;
-			moveBlock(correct_position, wrong_position);
+			moveBlockSeq(correct_position, wrong_position);
 			std::swap(blocks[correct_position], blocks[wrong_position]);
 		}
 		else {
@@ -95,11 +88,11 @@ int SortSequence::action() {
 			}
 			
 			log.info() << "move block from position " << correct_position << " to " << empty_position;
-			moveBlock(correct_position, empty_position);
+			moveBlockSeq(correct_position, empty_position);
 			std::swap(blocks[correct_position], blocks[empty_position]);
 			
 			log.info() << "move block from position " << wrong_position << " to " << correct_position;
-			moveBlock(wrong_position, correct_position);
+			moveBlockSeq(wrong_position, correct_position);
 			std::swap(blocks[wrong_position], blocks[correct_position]);
 		}
 	}

@@ -11,17 +11,14 @@ namespace eeduro{
 	namespace delta{
 		class EmergencyCondition : public Condition{
 			public:
-				EmergencyCondition(SafetySystem& safetySys, DeltaSafetyProperties& properties) : 
-					safetySys(safetySys),properties(properties)
-					{ /*empty*/ }
-
+				EmergencyCondition(SafetySystem& safetySys, DeltaSafetyProperties& safetyProp) : safetySys(safetySys), safetyProp(safetyProp) { }
 				bool validate() {
-					return safetySys.getCurrentLevel() == properties.slEmergency;
-
+					return safetySys.getCurrentLevel() == safetyProp.slEmergency;
 				}
 
+			private:
 				SafetySystem& safetySys;
-				DeltaSafetyProperties& properties;
+				DeltaSafetyProperties& safetyProp;
 		};
 	}
 }

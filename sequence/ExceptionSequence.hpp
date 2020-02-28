@@ -20,64 +20,42 @@ namespace eeduro {
 	namespace delta {
 		class MouseExceptionSequence : public Sequence{
 			public:
-				MouseExceptionSequence(std::string name, Sequence* caller, SafetySystem& safetySys, DeltaSafetyProperties& properties, DeltaControlSystem& controlSys, Calibration& calibration):
+				MouseExceptionSequence(std::string name, Sequence* caller, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp):
 				Sequence(name, caller, true),
-				controlSys(controlSys),
 				safetySys(safetySys),
-				properties(properties),
-				move("move", this, controlSys),
-				calibration(calibration),
-				waitForLevel("WaitForLevel", this, safetySys){}
+				safetyProp(safetyProp) { }
 				
 				int action(){
-					move({ 0, 0, calibration.transportation_height, 0});
-					controlSys.setMouseInput();
-					safetySys.triggerEvent(properties.doMouseControl);
-					waitForLevel(properties.slMouseControl.getLevelId());
+					safetySys.triggerEvent(safetyProp.doMouseControl);
 				}
 
 			private:
 				SafetySystem& safetySys;
-				DeltaSafetyProperties& properties;
-				DeltaControlSystem& controlSys;
-				Calibration& calibration;
-				Move move;
-				WaitForLevel waitForLevel;
+				DeltaSafetyProperties& safetyProp;
 		};
 			
 		class MouseTimeOutExceptionSequence : public Sequence{
 			public:
-				MouseTimeOutExceptionSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& properties, Calibration& calibration):
+				MouseTimeOutExceptionSequence(std::string name, Sequence* caller, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp):
 				Sequence(name, caller, true),
 				safetySys(safetySys),
-				properties(properties),
-				calibration(calibration),
-				controlSys(controlSys),
-				move("move", this, controlSys),
-				waitForLevel("WaitForLevel", this, safetySys){}
+				safetyProp(safetyProp) { }
 				
 				int action(){
-					controlSys.setPathPlannerInput();
-					move({ 0, 0, calibration.transportation_height, 0});
-					safetySys.triggerEvent(properties.doAutoMoving);
-					waitForLevel(properties.slAutoMoving.getLevelId());
+					safetySys.triggerEvent(safetyProp.doAutoMoving);
 				}
 				
 			private:
 				SafetySystem& safetySys;
-				DeltaSafetyProperties& properties;
-				Calibration& calibration;
-				DeltaControlSystem& controlSys;
-				Move move;
-				WaitForLevel waitForLevel;
+				DeltaSafetyProperties& safetyProp;
 		};
 		
 		class BlueButtonExceptionSequence : public Sequence{
 			public:
-				BlueButtonExceptionSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& properties, Calibration& calibration):
+				BlueButtonExceptionSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp):
 				Sequence(name, caller, true),
 				safetySys(safetySys),
-				properties(properties),
+				safetyProp(safetyProp),
 				calibration(calibration),
 				move("Move", this, controlSys),
 				waitForLevel("WaitForLevel", this, safetySys),
@@ -97,19 +75,41 @@ namespace eeduro {
 					move(p);
 					p = { 0, 0, calibration.transportation_height, 0 };
 					move(p);
-					safetySys.triggerEvent(properties.stopMoving);
-					waitForLevel(properties.slSystemReady.getLevelId());
+					safetySys.triggerEvent(safetyProp.stopMoving);
+					waitForLevel(safetyProp.slSystemReady);
 				}
 				
 			private:
 				SafetySystem& safetySys;
-				DeltaSafetyProperties& properties;
+				DeltaSafetyProperties& safetyProp;
 				DeltaControlSystem& controlSys;
 				Wait wait;
 				
 				Move move;
 				Calibration& calibration;
 				WaitForLevel waitForLevel;
+		};
+		
+		class EmergencyExceptionSequence : public Sequence {
+		public:
+			EmergencyExceptionSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp) :
+				Sequence(name, caller, true),
+				safetySys(safetySys),
+				safetyProp(safetyProp),
+				controlSys(controlSys) { }
+				
+			int action(){
+				controlSys.voltageSetPoint.setValue({0, 0, 0, 0});
+				controlSys.voltageSwitch.switchToInput(1);
+				HAL::instance().getLogicOutput("ledBlue", false)->set(false);
+				while (!HAL::instance().getLogicInput("buttonGreen", false)->get());
+				safetySys.triggerEvent(safetyProp.doControlStart);
+			}
+
+		private:
+			SafetySystem& safetySys;
+			DeltaSafetyProperties& safetyProp;
+			DeltaControlSystem& controlSys;
 		};
 	}
 }

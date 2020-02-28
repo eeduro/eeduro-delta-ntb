@@ -5,19 +5,19 @@ using namespace eeduro::delta;
 Calibration::Calibration() : Calibration("/opt/eeros/etc/delta-sort.conf") { }
 
 Calibration::Calibration(const char *path) : FileConfig(path) {
-	add("p0x", position[0].x);
-	add("p0y", position[0].y);
-	add("p0l12", position[0].level12);
-	add("p0l23", position[0].level23);
-	add("p0l30", position[0].level30);
-	add("p0z0min", position[0].zblockmin[0]);
-	add("p0z0max", position[0].zblockmax[0]);
-	add("p0z1min", position[0].zblockmin[1]);
-	add("p0z1max", position[0].zblockmax[1]);
-	add("p0z2min", position[0].zblockmin[2]);
-	add("p0z2max", position[0].zblockmax[2]);
-	add("p0z3min", position[0].zblockmin[3]);
-	add("p0z3max", position[0].zblockmax[3]);
+	add("p0x", position[0].x);			// x ccordinate of position 0 
+	add("p0y", position[0].y);			// x ccordinate of position y 
+	add("p0l12", position[0].level12);		// medium z level between blocks 1 and 2 at position 0
+	add("p0l23", position[0].level23);		// medium z level between blocks 2 and 3 at position 0
+	add("p0l30", position[0].level30);		// medium z level between blocks 3 and no block 0
+	add("p0z0min", position[0].zblockmin[0]);	// minimum z when no block at position 0
+	add("p0z0max", position[0].zblockmax[0]);	// maximum z when no block at position 0
+	add("p0z1min", position[0].zblockmin[1]);	// minimum z when block 1 at position 0
+	add("p0z1max", position[0].zblockmax[1]);	// maximum z when block 1 at position 0
+	add("p0z2min", position[0].zblockmin[2]);	// minimum z when block 2 at position 0
+	add("p0z2max", position[0].zblockmax[2]);	// maximum z when block 2 at position 0
+	add("p0z3min", position[0].zblockmin[3]);	// minimum z when block 3 at position 0
+	add("p0z3max", position[0].zblockmax[3]);	// maximum z when block 3 at position 0
 	add("p1x", position[1].x);
 	add("p1y", position[1].y);
 	add("p1l12", position[1].level12);

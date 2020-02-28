@@ -17,18 +17,16 @@ namespace eeduro {
 	namespace delta {
 		class DetectSequence : public Sequence {
 			public:
-				DetectSequence(std::string name, DeltaControlSystem& controlSys, Sequence* caller, Calibration& calibration);
-				
+				DetectSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration);
 				int operator() (int pos);
-				
 				int action();
 				
 			private:		
 				DeltaControlSystem& controlSys;
 				Calibration& calibration;
 				Move move;
-				int position;
 				Wait wait;
+				int position;
 		};
 	}
 }

@@ -17,7 +17,7 @@ namespace eeduro {
 	namespace delta {
 		class MoveBlockSequence : public Sequence {
 			public:
-				MoveBlockSequence(std::string name, DeltaControlSystem& controlSys, Sequence* caller, Calibration& calibration);
+				MoveBlockSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration);
 				int operator() (int from, int to);
 				int action();
 				
