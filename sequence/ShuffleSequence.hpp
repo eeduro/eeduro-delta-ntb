@@ -18,17 +18,16 @@ namespace eeduro {
 	namespace delta {
 		class ShuffleSequence : public Sequence {
 			public:
-				ShuffleSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration, DeltaSafetyProperties &properties);
+				ShuffleSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration);
 				int action();
 
 			private:
 				virtual int find(const std::array<int,4> &blocks, int block);
-				
 				DeltaControlSystem& controlSys;
-				Move move;
 				DetectSequence detectSequence;
 				MoveBlockSequence moveBlock;
 				Calibration& calibration;
+				Move move;
 		};
 	}
 }

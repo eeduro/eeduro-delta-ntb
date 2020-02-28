@@ -2,20 +2,20 @@
 
 using namespace eeduro::delta;
 
-AutoMoveSequence::AutoMoveSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& properties, Calibration& calibration):
+AutoMoveSequence::AutoMoveSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp, Calibration& calibration):
 	Sequence(name, caller, true),
-	sortSeq("Sort Sequence", this, controlSys, calibration, properties),
-	shuffSeq("Shuffle Sequence", this, controlSys, calibration, properties),
+	sortSeq("Sort Sequence", this, controlSys, calibration),
+	shuffSeq("Shuffle Sequence", this, controlSys, calibration),
 	wait("wait", this),
 	moveMouseCondition(controlSys),
-	mouseExceptionSequence("Mouse Exception Sequence", this,  safetySys, properties, controlSys, calibration),
-	moveMouseMonitor("MouseMoveMonitor", this, moveMouseCondition, SequenceProp::abort, &mouseExceptionSequence),
+	mouseExceptionSeq("Mouse Exception Sequence", this,  safetySys, safetyProp),
+	moveMouseMonitor("MouseMoveMonitor", this, moveMouseCondition, SequenceProp::abort, &mouseExceptionSeq),
 	safetySys(safetySys),
-	properties(properties),
+	safetyProp(safetyProp),
+	controlSys(controlSys),
 	blueButtonCondition(),
-	blueButtonExceptionSequence("Blue button exception sequence", this, controlSys, safetySys, properties, calibration),
-	blueButtonMonitor("BlueButtonMonitor", this, blueButtonCondition, SequenceProp::abort, &blueButtonExceptionSequence)
-	{ 
+	blueButtonExceptionSeq("Blue button exception sequence", this, controlSys, safetySys, safetyProp),
+	blueButtonMonitor("BlueButtonMonitor", this, blueButtonCondition, SequenceProp::abort, &blueButtonExceptionSeq) { 
 		wait.addMonitor(&moveMouseMonitor);
 		addMonitor(&blueButtonMonitor);
 	}

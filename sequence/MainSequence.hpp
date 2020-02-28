@@ -9,7 +9,7 @@
 
 #include "../control/DeltaControlSystem.hpp"
 #include "../safety/DeltaSafetyProperties.hpp"
-#include "CalibrateBlockSequence.hpp"
+#include "CalibrateSequence.hpp"
 #include "AutoMoveSequence.hpp"
 #include "HomingSequence.hpp"
 #include "ParkSequence.hpp"
@@ -23,31 +23,30 @@ namespace eeduro {
 	namespace delta {
 		class MainSequence : public Sequence {
 			public:
-				MainSequence(std::string name, Sequencer& sequencer, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties properties, Calibration& calibration);
+				MainSequence(std::string name, Sequencer& sequencer, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties safetyProp, Calibration& calibration);
 				int action();
 				
 			private:
-				HomingSequence homeSeq;
-				AutoMoveSequence amSeq;
+				HomingSequence homingSeq;
+				AutoMoveSequence automoveSeq;
 				ParkSequence parkSeq;
-				CalibrateBlockSequence cbSeq;
-				MouseSequence mouseSeq;
-				
-				DeltaControlSystem& controlSys;
-				SafetySystem& safetySys;
-				DeltaSafetyProperties& properties;
-				
+				CalibrateSequence calibrateSeq;
+				MouseSequence mouseSeq;	
 				Wait wait;
 				WaitForLevel waitForLevel;
 				
-				EmergencyCondition ec;
-				Monitor emergencyLevel;
+				EmergencyExceptionSequence emergencyExceptionSeq;
+				EmergencyCondition emergencyCondition;
+				Monitor emergencyMonitor;
 				
 				eeros::hal::Input<bool>* buttonGreen;
 				eeros::hal::Input<bool>* buttonBlue;
 				eeros::hal::Output<bool>* ledBlue;
-				
+				DeltaControlSystem& controlSys;
+				SafetySystem& safetySys;
+				DeltaSafetyProperties& safetyProp;
 				uint8_t blueButtonCounter = 0;
+				Logger log;
 			};
 	}
 }

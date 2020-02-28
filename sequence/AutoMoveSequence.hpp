@@ -22,24 +22,23 @@ namespace eeduro {
 	namespace delta {
 		class AutoMoveSequence : public Sequence {
 			public:
-				AutoMoveSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& properties, Calibration& calibration);
+				AutoMoveSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp, Calibration& calibration);
 				int action();
 				
 			private:
 				SortSequence sortSeq;
 				ShuffleSequence shuffSeq;
 				Wait wait;
-				
-				MouseExceptionSequence mouseExceptionSequence;
+				MouseExceptionSequence mouseExceptionSeq;
 				MoveMouseCondition moveMouseCondition;
 				Monitor moveMouseMonitor;
-				
-				SafetySystem& safetySys;
-				DeltaSafetyProperties& properties;
-				
-				BlueButtonExceptionSequence blueButtonExceptionSequence;
+				BlueButtonExceptionSequence blueButtonExceptionSeq;
 				BlueButtonCondition blueButtonCondition;
 				Monitor blueButtonMonitor;
+				
+				DeltaControlSystem& controlSys;
+				DeltaSafetyProperties& safetyProp;
+				SafetySystem& safetySys;
 			};
 	}
 }

@@ -3,7 +3,6 @@
 DeltaControlSystem::DeltaControlSystem() : 
 	mouse("/dev/input/event1"),
 	pathPlanner({1, 1, 1, 5}, {10, 10, 10, 50}, dt),
-	i(i1524, i1524, i1524, i0816),
 	kM(kM1524, kM1524, kM1524, kM0816),
 	RA(RA1524, RA1524, RA1524, RA0816),
 	posSwitch(0),
@@ -104,8 +103,8 @@ DeltaControlSystem::DeltaControlSystem() :
 	pathPlanner.getVelOut().getSignal().setName("dxDes");		// dx/dt -> Speed
 	pathPlanner.getAccOut().getSignal().setName("ddxDes");		// ddx/dt² -> Acceleration
 
-	mouse.getOut().getSignal().setName("mousexDes");		// Mouse Position
-	mouse.getButtonOut().getSignal().setName("mouseButtons"); 	//3 Mouse Buttons
+	mouse.getOut().getSignal().setName("mousexDes");
+	mouse.getButtonOut().getSignal().setName("mouseButtons");
 
 	posSwitch.getOut().getSignal().setName("xDes");
 	velSwitch.getOut().getSignal().setName("dxDes");
@@ -221,8 +220,8 @@ DeltaControlSystem::DeltaControlSystem() :
 
 	emag.getIn().connect(emagVal.getOut());
 	
-	posSwitch.connect(velSwitch);
-	posSwitch.connect(accSwitch);
+	posSwitch.combine(velSwitch);
+	posSwitch.combine(accSwitch);
 
 
 	/*
@@ -286,10 +285,12 @@ DeltaControlSystem::DeltaControlSystem() :
 }
 
 void DeltaControlSystem::start() {
+	log.info() << "Start control system";
 	timedomain.start();
 }
 
 void DeltaControlSystem::stop() {
+	log.info() << "Stop control system";
 	timedomain.stop();
 }
 
@@ -350,8 +351,7 @@ void DeltaControlSystem::setMouseInput()
 	voltageSwitch.switchToInput(0);
 }
 
-void DeltaControlSystem::setPathPlannerInput()
-{
+void DeltaControlSystem::setPathPlannerInput() {
 	posSwitch.switchToInput(0);		// set input to pathplanner, also switches the velSwitch and accSwitch
 	voltageSwitch.switchToInput(0);
 }

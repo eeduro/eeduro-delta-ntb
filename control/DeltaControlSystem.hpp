@@ -2,7 +2,6 @@
 
 #include <eeros/core/Executor.hpp>
 #include <eeros/logger/Logger.hpp>
-
 #include <eeros/control/Sum.hpp>
 #include <eeros/control/D.hpp>
 #include <eeros/control/Gain.hpp>
@@ -27,6 +26,7 @@
 #include "PathPlanner.hpp"
 
 using namespace eeros::control;
+using namespace eeros::logger;
 
 namespace eeduro{
 	namespace delta{
@@ -62,7 +62,6 @@ namespace eeduro{
 				* Components of the Controlsystem
 				* ###
 				*/
-				AxisVector i;
 				AxisVector kM;
 				AxisVector RA;
 				Kinematic kinematic;
@@ -121,6 +120,7 @@ namespace eeduro{
 				Switch<2, AxisVector> velSwitch;
 				
 				TimeDomain timedomain;
+				Logger log;
 		};
 	} 
 }

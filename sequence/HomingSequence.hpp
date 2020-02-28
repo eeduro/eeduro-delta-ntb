@@ -19,13 +19,13 @@ namespace eeduro{
 	namespace delta{
 		class HomingSequence : public Sequence{
 			public:
-				HomingSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& properties, Calibration& calibration );
+				HomingSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp, Calibration& calibration );
 				int action();
 
 			private:
 				DeltaControlSystem& controlSys;
 				SafetySystem& safetySys;
-				DeltaSafetyProperties& properties;
+				DeltaSafetyProperties& safetyProp;
 				Calibration& calibration;
 				Move move;
 				Wait wait;

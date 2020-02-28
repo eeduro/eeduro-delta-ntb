@@ -52,9 +52,8 @@ DeltaSafetyProperties::DeltaSafetyProperties(DeltaControlSystem& controlSys) :
 		* Define critical outputs
 		* ###
 		*/
-		greenLed = hal.getLogicOutput("ledGreen");
-		errorLed = hal.getLogicOutput("ledRed");
-		
+		greenLed = hal.getLogicOutput("ledGreen", false);
+		errorLed = hal.getLogicOutput("ledRed");	
 		criticalOutputs = { greenLed , errorLed};
 		
 		/*
@@ -63,7 +62,6 @@ DeltaSafetyProperties::DeltaSafetyProperties(DeltaControlSystem& controlSys) :
 		* ###
 		*/
 		emergencyStop = hal.getLogicInput("buttonRed");
-		
 		criticalInputs = { emergencyStop };	  
 	  
 		/*
@@ -91,7 +89,6 @@ DeltaSafetyProperties::DeltaSafetyProperties(DeltaControlSystem& controlSys) :
 		* Add events to the levels
 		* ###
 		*/
-
 		slControlStarting.addEvent(controlStartingDone, slSystemOn, kPrivateEvent);
 		slSystemOn.addEvent(doPoweringUp, slPoweringUp, kPublicEvent);
 		slPoweringUp.addEvent(doHoming, slHoming, kPublicEvent);
@@ -100,18 +97,13 @@ DeltaSafetyProperties::DeltaSafetyProperties(DeltaControlSystem& controlSys) :
 		slSystemReady.addEvent(doAutoMoving, slAutoMoving, kPublicEvent);
 		slSystemReady.addEvent(doParking, slParking, kPublicEvent);
 		slAutoMoving.addEvent(doMouseControl, slMouseControl, kPublicEvent);
-		slMouseControl.addEvent(doAutoMoving, slAutoMoving, kPublicEvent);
-		
+		slMouseControl.addEvent(doAutoMoving, slAutoMoving, kPublicEvent);	
 		slEmergency.addEvent(doControlStart, slControlStarting, kPublicEvent);
-		slEmergency.addEvent(doParking, slParking, kPublicEvent);
-		
 		slAutoMoving.addEvent(stopMoving, slSystemReady, kPublicEvent);
 		slMouseControl.addEvent(stopMoving, slSystemReady, kPublicEvent);
 		slParking.addEvent(parkingDone, slParked, kPublicEvent);
 		slParked.addEvent(doControlStop, slControlStopping, kPublicEvent);
 		slControlStopping.addEvent(controlStoppingDone, slOff, kPublicEvent);
-		
-		slSystemOn.addEvent(controlStoppingDone, slOff, eeros::safety::kPrivateEvent);
 		
 		addEventToLevelAndAbove(slSystemOn, doEmergency, slEmergency, kPublicEvent);
 		
@@ -159,41 +151,23 @@ DeltaSafetyProperties::DeltaSafetyProperties(DeltaControlSystem& controlSys) :
 		* Define and add level functions
 		* ###
 		*/
-		slOff.setLevelAction([&](SafetyContext*privateContext){
+		slOff.setLevelAction([&](SafetyContext*privateContext) {
 			Executor::stop();
 		});
 
-
-		slEmergency.setLevelAction([&](SafetyContext*privateContext){
-			controlSys.voltageSetPoint.setValue({0.0,0.0,0.0,0.0});
-			controlSys.emagVal.setValue(false);
-			controlSys.voltageSwitch.switchToInput(1);
-			controlSys.posSwitch.switchToInput(1);
+		slControlStopping.setLevelAction([&](SafetyContext*privateContext) {
 			controlSys.stop();
-		});
+			Sequencer::instance().abort();
+			privateContext->triggerEvent(controlStoppingDone);
+		});	
 
-
-		slControlStarting.setLevelAction([&](SafetyContext*privateContext){
+		slControlStarting.setLevelAction([&](SafetyContext*privateContext) {
 			controlSys.start();
-			controlSys.torqueLimitation.setLimit({-q012gearTorqueLimit,-q012gearTorqueLimit,-q012gearTorqueLimit,-q3gearTorqueLimit},{q012gearTorqueLimit,q012gearTorqueLimit,q012gearTorqueLimit,q3gearTorqueLimit});
+			AxisVector torqueLimit{ q012gearTorqueLimit, q012gearTorqueLimit, q012gearTorqueLimit, q3gearTorqueLimit};
+			controlSys.torqueLimitation.setLimit(-torqueLimit, torqueLimit);
 			privateContext->triggerEvent(controlStartingDone);
 		});
 		
-		slControlStopping.setLevelAction([&](SafetyContext*privateContext){
-			controlSys.stop();
-			auto& sequencer = Sequencer::instance();
-			sequencer.abort();
-
-			privateContext->triggerEvent(controlStoppingDone);
-		});	
-		
-		slSystemOn.setLevelAction([&](SafetyContext*privateContext){
-			if(slSystemOn.getNofActivations() >= 3000){
-				privateContext->triggerEvent(controlStoppingDone);
-			}
-		});
-
-
 		/*
 		* ###
 		* Define entry level

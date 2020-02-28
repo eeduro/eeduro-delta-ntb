@@ -11,13 +11,9 @@ namespace eeduro{
 	namespace delta{
 		class Grab : public Step {
 			public:
-				Grab(std::string name, Sequence* caller, DeltaControlSystem& controlSys) : 
-					Step(name, caller), controlSys(controlSys){
-				}
-				int action(){
-					controlSys.emagVal.setValue(true);
-				};
-		      
+				Grab(std::string name, Sequence* caller, DeltaControlSystem& controlSys) : Step(name, caller), controlSys(controlSys) { }
+				int action() {controlSys.emagVal.setValue(true);}
+			private:
 				DeltaControlSystem &controlSys; 
 		};
 	}

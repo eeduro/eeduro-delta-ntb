@@ -21,7 +21,6 @@ using namespace eeros::control;
 using namespace eeros::safety;
 using namespace eeros::logger;
 using namespace eeros::sequencer;
-
 using namespace eeduro::delta;
 
 void signalHandler(int signum){
@@ -30,11 +29,12 @@ void signalHandler(int signum){
 }
 
 int main(int argc, char **argv) {
-	
+
 	StreamLogWriter w(std::cout);
 	Logger::setDefaultWriter(&w);
 	Logger log;
-	w.show();
+// 	w.show();
+	log.info() << "Start Delta application";
 	
 	log.info() << "Initializing Hardware...";
 	HAL& hal = HAL::instance();
@@ -43,12 +43,12 @@ int main(int argc, char **argv) {
 	signal(SIGINT, signalHandler);
 	
 	// Create the control system
-	DeltaControlSystem controlSys{};
+	DeltaControlSystem controlSys;
 	
 	// Create and initialize a safety system
-	DeltaSafetyProperties properties{controlSys};
-	SafetySystem safetySys{properties, dt};
-	controlSys.timedomain.registerSafetyEvent(safetySys, properties.doEmergency);
+	DeltaSafetyProperties safetyProp{controlSys};
+	SafetySystem safetySys{safetyProp, dt};
+	controlSys.timedomain.registerSafetyEvent(safetySys, safetyProp.doEmergency);
 	
 	Calibration calibration{};
 	calibration.loadDefaults();
@@ -56,21 +56,17 @@ int main(int argc, char **argv) {
 		log.warn() << "could not load calibration";
 	}
 	
-	auto& sequencer = Sequencer::instance();
-
-	MainSequence mainSequence{"Main Sequence", sequencer, controlSys, safetySys, properties, calibration};
-	
-	sequencer.addSequence(mainSequence);
-	
+	auto& seq = Sequencer::instance();
+	MainSequence mainSequence("Main Sequence", seq, controlSys, safetySys, safetyProp, calibration);
+	seq.addSequence(mainSequence);
 	mainSequence.start();
 	
 	auto &executor = Executor::instance();
 	executor.setMainTask(safetySys);
-	
 	executor.run();
 	
-	sequencer.wait();
+	seq.wait();
 	
-	log.info() << "Example finished...";
+	log.info() << "Delta application finished";
 	return 0;
 }
