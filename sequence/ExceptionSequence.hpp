@@ -18,14 +18,14 @@ using namespace eeros::safety;
 
 namespace eeduro {
 	namespace delta {
-		class MouseExceptionSequence : public Sequence{
+		class MouseExceptionSequence : public Sequence {
 			public:
 				MouseExceptionSequence(std::string name, Sequence* caller, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp):
 				Sequence(name, caller, true),
 				safetySys(safetySys),
 				safetyProp(safetyProp) { }
 				
-				int action(){
+				int action() {
 					safetySys.triggerEvent(safetyProp.doMouseControl);
 				}
 
@@ -34,14 +34,14 @@ namespace eeduro {
 				DeltaSafetyProperties& safetyProp;
 		};
 			
-		class MouseTimeOutExceptionSequence : public Sequence{
+		class MouseTimeOutExceptionSequence : public Sequence {
 			public:
 				MouseTimeOutExceptionSequence(std::string name, Sequence* caller, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp):
 				Sequence(name, caller, true),
 				safetySys(safetySys),
 				safetyProp(safetyProp) { }
 				
-				int action(){
+				int action() {
 					safetySys.triggerEvent(safetyProp.doAutoMoving);
 				}
 				
@@ -50,44 +50,27 @@ namespace eeduro {
 				DeltaSafetyProperties& safetyProp;
 		};
 		
-		class BlueButtonExceptionSequence : public Sequence{
+		class BlueButtonExceptionSequence : public Sequence {
 			public:
 				BlueButtonExceptionSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp):
 				Sequence(name, caller, true),
+				controlSys(controlSys),
 				safetySys(safetySys),
 				safetyProp(safetyProp),
-				calibration(calibration),
-				move("Move", this, controlSys),
-				waitForLevel("WaitForLevel", this, safetySys),
-				controlSys(controlSys),
-				wait("Wait", this){}
+				move("move", this, controlSys) { }
 				
-				int action(){
-					eeros::math::Vector<4> torqueLimit{ q012gearTorqueLimit, q012gearTorqueLimit, q012gearTorqueLimit, q3gearTorqueLimit };
-					controlSys.torqueLimitation.setLimit(-torqueLimit, torqueLimit);
+				int action() {
+					controlSys.pathPlanner.setInitPos(controlSys.directKin.getOut().getSignal().getValue());
 					controlSys.setPathPlannerInput();
-					AxisVector p = controlSys.directKin.getOut().getSignal().getValue();
-					controlSys.pathPlanner.setInitPos(p);
-					
-					log.warn() << p;
-					p[2] = calibration.transportation_height;
-					log.warn() << p;
-					move(p);
-					p = { 0, 0, calibration.transportation_height, 0 };
-					move(p);
+					move({0, 0, tcpReady_z, 0});
 					safetySys.triggerEvent(safetyProp.stopMoving);
-					waitForLevel(safetyProp.slSystemReady);
 				}
 				
 			private:
 				SafetySystem& safetySys;
 				DeltaSafetyProperties& safetyProp;
 				DeltaControlSystem& controlSys;
-				Wait wait;
-				
 				Move move;
-				Calibration& calibration;
-				WaitForLevel waitForLevel;
 		};
 		
 		class EmergencyExceptionSequence : public Sequence {
@@ -98,7 +81,7 @@ namespace eeduro {
 				safetyProp(safetyProp),
 				controlSys(controlSys) { }
 				
-			int action(){
+			int action() {
 				controlSys.voltageSetPoint.setValue({0, 0, 0, 0});
 				controlSys.voltageSwitch.switchToInput(1);
 				HAL::instance().getLogicOutput("ledBlue", false)->set(false);

@@ -9,7 +9,7 @@ using namespace eeros::sequencer;
 
 namespace eeduro{
 	namespace delta{
-		class EmergencyCondition : public Condition{
+		class EmergencyCondition : public Condition {
 			public:
 				EmergencyCondition(SafetySystem& safetySys, DeltaSafetyProperties& safetyProp) : safetySys(safetySys), safetyProp(safetyProp) { }
 				bool validate() {

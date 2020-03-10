@@ -15,32 +15,28 @@ int DetectSequence::operator()(int pos) {
 }
 
 int DetectSequence::action() {	
-	eeros::math::Vector<4> torqueLimit{ q012gearTorqueLimit, q012gearTorqueLimit, q012gearTorqueLimit, q3gearTorqueLimit };
 	auto p = controlSys.pathPlanner.getLastPoint();
 	p[3] = 0;
 	double last_z = p[2];
-// 	p[2] = calibration.position[position].level12 + 0.005;
-// 	move(p);
+	p[2] = calibration.position[position].level12 + 0.005;
+	move(p);
 
-	controlSys.torqueLimitation.setLimit(-torqueLimit * 0.01, torqueLimit * 0.01);
+	eeros::math::Vector<4> limit{ 100, 100, 100, 100 };
+	controlSys.accLimitation.setLimit({ -100, -100, 0, -100 }, limit);
+	controlSys.forceSetPoint.setValue({0, 0, -0.1, 0});
 	p[2] = calibration.position[position].level30 - 0.002;
 	move(p);
-
-// 	controlSys.torqueLimitation.setLimit(-torqueLimit * 0.01, torqueLimit * 0.01);
-	wait(2);		// final position may not be reached
+	wait(0.5);	// wait for final position to be reached
 	
 	double z = controlSys.directKin.getOut().getSignal().getValue()[2];
-// 	controlSys.torqueLimitation.setLimit(-torqueLimit * 0.1, torqueLimit * 0.1);
-// 	p[2] = calibration.position[position].level12 + 0.002;
-// 	move(p);		// start slowly move in z+
-
 	p[2] = last_z;
+	controlSys.accLimitation.setLimit(-limit, limit);
+	controlSys.forceSetPoint.setValue({0, 0, 0, 0});
 	move(p);
-	controlSys.torqueLimitation.setLimit(-torqueLimit, torqueLimit);
 
 	int block = calibration.getBlock(position, z);
 	log.warn() << "[DETECT] pos " << position << ": z = " << z << " -> block = " << block;
-
+	
 	return block;
 }
 

@@ -24,8 +24,8 @@ namespace eeduro {
 			private:
 				virtual int find(const std::array<int,4> &blocks, int block);
 				DeltaControlSystem& controlSys;
-				DetectSequence detectSequence;
-				MoveBlockSequence moveBlock;
+				DetectSequence detectSeq;
+				MoveBlockSequence moveBlockSeq;
 				Calibration& calibration;
 				Move move;
 		};

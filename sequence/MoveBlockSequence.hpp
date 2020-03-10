@@ -18,7 +18,7 @@ namespace eeduro {
 		class MoveBlockSequence : public Sequence {
 			public:
 				MoveBlockSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration);
-				int operator() (int from, int to);
+				int operator() (int block,int from, int to);
 				int action();
 				
 			private:		
@@ -29,6 +29,7 @@ namespace eeduro {
 				Release release;
 				int from;
 				int to;
+				int block;
 		};
 	}
 }

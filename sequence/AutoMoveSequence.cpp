@@ -16,19 +16,21 @@ AutoMoveSequence::AutoMoveSequence(std::string name, Sequence* caller, DeltaCont
 	blueButtonCondition(),
 	blueButtonExceptionSeq("Blue button exception sequence", this, controlSys, safetySys, safetyProp),
 	blueButtonMonitor("BlueButtonMonitor", this, blueButtonCondition, SequenceProp::abort, &blueButtonExceptionSeq) { 
-		wait.addMonitor(&moveMouseMonitor);
+		addMonitor(&moveMouseMonitor);
 		addMonitor(&blueButtonMonitor);
 	}
 	
 
 
 int AutoMoveSequence::action() {
-	while(getRunningState() == SequenceState::running){
-		log.warn() << getRunningState();
-		sortSeq.start();
+	moveMouseCondition.reset();
+	controlSys.setPathPlannerInput();
+	while(getRunningState() == SequenceState::running) {
+		auto res = sortSeq.start();
 		moveMouseCondition.reset();
 		wait(5);
-		shuffSeq.start();
+		if (res == 0) shuffSeq.start();
+		wait(5);
 	}
 }
 

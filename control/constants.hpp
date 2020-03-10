@@ -33,7 +33,7 @@ namespace eeduro {
 		constexpr double tcpReady_z = -0.01;
 		constexpr double tcpReady_phi = 1.0;
 
-		constexpr double q012homingOffset = 0.48;
+		constexpr double q012homingOffset = 0.475;
 		constexpr double q3homingOffset = pi - 0.06;
 
 		constexpr double q012gearTorqueLimit = 0.3;

@@ -19,16 +19,13 @@ namespace eeduro{
 	namespace delta{
 		class ParkSequence : public Sequence{
 			public:
-				ParkSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& properties, Calibration& calibration);
+				ParkSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp);
 				int action();
 
 			private:
 				DeltaControlSystem& controlSys;
 				SafetySystem& safetySys;
-				DeltaSafetyProperties& properties;
-				Calibration& calibration;
-				
-				Release release;
+				DeltaSafetyProperties& safetyProp;
 				Move move;
 				Wait wait;
 		};

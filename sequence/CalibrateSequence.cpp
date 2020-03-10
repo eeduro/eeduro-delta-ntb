@@ -19,7 +19,8 @@ int CalibrateSequence::action() {
 	log.info() << "Start calibration";
 	
 	const char *block[] = { "[no block]", "[block 1]", "[block 2]", "[block 3]" };
-	controlSys.setVoltageForInitializing({0, 0, 0, 0});	// allow to move freely
+	controlSys.voltageSetPoint.setValue({0, 0, 0, 0});	// allow to move freely
+	controlSys.voltageSwitch.switchToInput(1);	// choose fix voltage setpoint
 	wait(3);
 	
 	/*test for z measurement*/
@@ -183,4 +184,5 @@ int CalibrateSequence::action() {
 	log.warn() << "Insert all blocks and press the blue button";
 	while (!buttonBlue->get());
 	ledBlue->set(true);
+	controlSys.voltageSwitch.switchToInput(0);	// choose controller setpoint
 }

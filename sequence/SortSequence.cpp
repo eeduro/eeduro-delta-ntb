@@ -5,102 +5,86 @@ using namespace eeduro::delta;
 SortSequence::SortSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, Calibration& calibration):
 	Sequence(name, caller, true),
 	move("move", this, controlSys),
-	detectSeq("detect sequence", this, controlSys, calibration),
-	moveBlockSeq("moveBlock", this, controlSys, calibration),
+	detectSeq("Detect sequence", this, controlSys, calibration),
+	moveBlockSeq("Move block sequence", this, controlSys, calibration),
 	controlSys(controlSys),
 	calibration(calibration) { }
 
 int SortSequence::action() {
 	std::array<int,4> blocks;
 	// detect positions of all blocks
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < blocks.size(); i++) {
 		AxisVector p = {calibration.position[i].x, calibration.position[i].y, calibration.transportation_height, 0};
 		move(p);
 		blocks[i] = detectSeq(i);
 	}
-
-	auto l = log.info();
-	l << "detected blocks:";
-	for (int i = 0; i < 4; i++) l << " " << blocks[i];
+	log.warn() << "detected blocks: " << blocks[0] << " " << blocks[1] << " " << blocks[2] << " " << blocks[3] << " ";
 	
-	// check for invalid values
-	bool block_ok[4];
-	for (int i = 0; i < 4; i++) block_ok[i] = false;
-	for (int i = 0; i < 4; i++) {
+	// check for invalid values and if all blocks are present
+	std::array<bool,blocks.size()> present;
+	present.fill(false);
+	for (int i = 0; i < blocks.size(); i++) {
 		if (blocks[i] < 0 || blocks[i] > 3) {
 			log.error() << "index out of range (position = " << i << ", value = " << blocks[i] << ")";
 			return -1;
 		}
-		block_ok[blocks[i]] = true;
+		present[blocks[i]] = true;
 	}
-	
-	// check if all blocks are present
-	bool all_ok = true;
-	for (int i = 0; i < 4; i++) {
-		if (!block_ok[i]) {
+	bool ok = true;
+	for (int i = 0; i < blocks.size(); i++) {
+		if (!present[i]) {
 			log.error() << "missing block " << i;
-			all_ok = false;
+			ok = false;
 		}
 	}
-	if (!all_ok) {
+	if (!ok) {
 		move({ 0, 0, calibration.transportation_height, 0});
 		return -1;
 	}
 	
 	while (true) {
 		// find wrong block
-		int wrong_block = (-1);
-		int wrong_position = (-1);
+		int wrongBlock = -1;
+		int wrongPos = -1;
 		for (int i = 0; i < blocks.size(); i++) {
-			wrong_position = find(blocks, i);
-			if (wrong_position < 0) {
+			wrongPos = find(blocks, i);
+			if (wrongPos < 0) {
 				log.error() << "cannot find block " << i;
 				return -1;
 			}
-			if (wrong_position != i) {
-				wrong_block = i;
+			if (wrongPos != i) {
+				wrongBlock = i;
 				break;
 			}
 		}
-		if (wrong_block < 0) break;
+		if (wrongBlock < 0) break;
 		
 		// move block to correct position
-		if (wrong_block == 0) {
-			
-			int correct_position = find(blocks, wrong_position);
-			log.info() << "correct position: " << correct_position;
-			log.info() << "wrong position: " << wrong_position;
-			if (correct_position < 0) {
-				log.error() << "cannot find block " << wrong_position;
+		if (wrongBlock == 0) {
+			int correctPos = find(blocks, wrongPos);
+			if (correctPos < 0) {
+				log.error() << "cannot find block " << wrongPos;
 				return -1;
 			}
-			
-			log.info() << "move block from position " << correct_position << " to " << wrong_position;
-			moveBlockSeq(correct_position, wrong_position);
-			std::swap(blocks[correct_position], blocks[wrong_position]);
-		}
-		else {
-			int correct_position = wrong_block;
-			int empty_position = find(blocks, 0);
-			if (empty_position < 0) {
+			moveBlockSeq(blocks[correctPos], correctPos, wrongPos);
+			std::swap(blocks[correctPos], blocks[wrongPos]);
+		} else {
+			int correctPos = wrongBlock;
+			int emptyPos = find(blocks, 0);
+			if (emptyPos < 0) {
 				log.error() << "cannot find block 0";
 				return -1;
 			}
+			moveBlockSeq(blocks[correctPos], correctPos, emptyPos);
+			std::swap(blocks[correctPos], blocks[emptyPos]);
 			
-			log.info() << "move block from position " << correct_position << " to " << empty_position;
-			moveBlockSeq(correct_position, empty_position);
-			std::swap(blocks[correct_position], blocks[empty_position]);
-			
-			log.info() << "move block from position " << wrong_position << " to " << correct_position;
-			moveBlockSeq(wrong_position, correct_position);
-			std::swap(blocks[wrong_position], blocks[correct_position]);
+			moveBlockSeq(blocks[wrongPos], wrongPos, correctPos);
+			std::swap(blocks[wrongPos], blocks[correctPos]);
 		}
 	}
 	move({ 0, 0, calibration.transportation_height, 0});
-	log.info() << "finished sorting";
+	return 0;
 }
-
-
 
 
 int SortSequence::find(const std::array<int,4> &blocks, int block) {

@@ -4,12 +4,13 @@ using namespace eeduro::delta;
 
 MainSequence::MainSequence(std::string name, Sequencer& sequencer, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties safetyProp, Calibration& calibration):
 	Sequence(name, sequencer),
+	log('M'),
 	safetyProp(safetyProp),
 	safetySys(safetySys),
 	controlSys(controlSys),
 	homingSeq("Homing sequence", this, controlSys, safetySys, safetyProp, calibration),
 	automoveSeq("AutoMove sequence", this, controlSys, safetySys, safetyProp, calibration),
-	parkSeq("Park sequence", this, controlSys, safetySys, safetyProp, calibration),
+	parkSeq("Park sequence", this, controlSys, safetySys, safetyProp),
 	calibrateSeq("Calibrate sequence", this, controlSys, calibration),
 	mouseSeq("Mouse sequence", this, controlSys, safetySys, safetyProp),
 	wait("Wait in main", this),
@@ -38,19 +39,19 @@ int MainSequence::action() {
 	ledBlue->set(true);
 	auto bluePrev = buttonBlue->get();
 
-	while(getRunningState() == SequenceState::running) {
+	while (getRunningState() == SequenceState::running) {
 		
 		if(safetySys.getCurrentLevel() == safetyProp.slSystemReady) {
 			
-			if(buttonGreen->get()) {
+			if (buttonGreen->get()) {
 				blueButtonCounter = 0;
 				if(buttonBlue->get()) calibrateSeq.start();
 				else safetySys.triggerEvent(safetyProp.doAutoMoving);     // go to auto moving
 			}
 			auto blue = buttonBlue->get();
-			if(blue && blue != bluePrev) {
+			if (blue && blue != bluePrev) {
 				blueButtonCounter++;
-				if(blueButtonCounter >= 3) {                    // doParking and stop the application
+				if (blueButtonCounter >= 3) {                    // doParking and stop the application
 					ledBlue->set(false);
 					safetySys.triggerEvent(safetyProp.doParking);
 				}

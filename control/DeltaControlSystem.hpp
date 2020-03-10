@@ -10,10 +10,10 @@
 #include <eeros/control/PeripheralOutput.hpp>
 #include <eeros/control/TimeDomain.hpp>
 #include <eeros/control/MouseInput.hpp>
-#include <eeros/control/Saturation.hpp>
 #include <eeros/control/Switch.hpp>
 #include <eeros/control/Mux.hpp>
 #include <eeros/control/DeMux.hpp>
+#include <eeros/control/Saturation.hpp>
 
 #include "types.hpp"
 #include "Kinematic.hpp"
@@ -43,19 +43,8 @@ namespace eeduro{
 				* Methods for the sequencer
 				* ###
 				*/
-				void enableAxis();
-				void disableAxis();
-				void setVoltageForInitializing(AxisVector u);
-				bool switchToPosControl();
-				bool axisHomed();
-				AxisVector getTcpPos();
-				AxisVector getAxisPos();
-				void goToPos(double x, double y, double z, double phi);
-				bool allAxisStopped(double maxSpeed = 0.001);
 				void setMouseInput();
 				void setPathPlannerInput();
-
-				bool homed;
 
 				/*
 				* ###
@@ -95,12 +84,13 @@ namespace eeduro{
 				Gain<AxisVector> speedController;
 
 				Sum<2,AxisVector> accSum;
+				Saturation<AxisVector> accLimitation;
 
 				Inertia inertia;
-				Jacobi jacobi;
-
 				Saturation<AxisVector> forceLimitation;
-
+				Constant<AxisVector> forceSetPoint;
+				Sum<2, AxisVector> forceSum;
+				Jacobi jacobi;
 				Saturation<AxisVector> torqueLimitation;
 
 				MotorModel motorModel;

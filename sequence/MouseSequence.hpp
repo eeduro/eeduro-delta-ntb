@@ -6,7 +6,8 @@
 #include <eeros/safety/SafetySystem.hpp>
 
 #include "../control/DeltaControlSystem.hpp"
-#include "step/Move.hpp"
+#include "step/Grab.hpp"
+#include "step/Release.hpp"
 #include "ExceptionSequence.hpp"
 #include "conditions/BlueButtonCondition.hpp"
 #include "conditions/EmergencyCondition.hpp"
@@ -23,10 +24,11 @@ namespace eeduro {
 
 			private:
 				DeltaControlSystem& controlSys;
-				DeltaSafetyProperties& safetyProp;
-				SafetySystem& safetySys;
 				AxisVector mousePosPrev;
+				Matrix<3,1,bool> mouseButtonPrev;
 				Wait wait;
+				Grab grab;
+				Release release;
 				MouseTimeOutExceptionSequence mouseTimeoutSequence;
 				BlueButtonExceptionSequence blueButtonExceptionSequence;
 				BlueButtonCondition blueButtonCondition;

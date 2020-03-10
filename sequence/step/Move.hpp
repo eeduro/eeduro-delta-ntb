@@ -12,7 +12,7 @@ namespace eeduro{
 		class Move : public Step {
 			public:
 				Move(std::string name, Sequence* caller, DeltaControlSystem& controlSys) : Step(name, caller), controlSys(controlSys) {
-					this->position = {0,0,0,0};
+					this->position = {0, 0, 0, 0};
 				}
 				int operator() (AxisVector position) {this->position = position; return start();}
 				int action() {controlSys.pathPlanner.gotoPoint(position);}

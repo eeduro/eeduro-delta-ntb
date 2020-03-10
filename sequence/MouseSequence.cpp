@@ -7,9 +7,9 @@ using namespace eeduro::delta;
 MouseSequence::MouseSequence(std::string name, Sequence* caller, DeltaControlSystem& controlSys, SafetySystem& safetySys, DeltaSafetyProperties& safetyProp) :
 	Sequence(name, caller, true),
 	controlSys(controlSys),
-	safetySys(safetySys),
-	safetyProp(safetyProp),
-	wait("Wait in mouse move sequence", this),
+	wait("wait in mouse move sequence", this),
+	grab("grab", this, controlSys),
+	release("release", this, controlSys),
 	mouseTimeoutSequence("Mouse TimeOut Exception Sequence", this, safetySys, safetyProp),
 	blueButtonCondition(),
 	blueButtonExceptionSequence("Blue button exception sequence", this, controlSys, safetySys, safetyProp),
@@ -21,16 +21,19 @@ MouseSequence::MouseSequence(std::string name, Sequence* caller, DeltaControlSys
 	}
 
 int MouseSequence::action() {
-// 	controlSys.setMouseInput();
-// 	auto pos = controlSys.circlePlanner.getOut().getSignal().getValue();
-// 	controlSys.mouse.setInitPos(pos[0], pos[1], pos[2], 0);
-// 	mousePosPrev = controlSys.redVect.getOut().getSignal().getValue();
-// 
-// 	while (getRunningState() == SequenceState::running) {
-// 		auto pos = controlSys.redVect.getOut().getSignal().getValue();	
-// 		if (pos != mousePosPrev) resetTimeout();
-// 		mousePosPrev = pos;
-// 		wait(0.1);
-// 	}
+	controlSys.setMouseInput();
+	auto pos = controlSys.pathPlanner.getPosOut().getSignal().getValue();
+	controlSys.mouse.setInitPos(pos[0], pos[1], pos[2], 0);
+	mousePosPrev = controlSys.mouse.getOut().getSignal().getValue();
+
+	while (getRunningState() == SequenceState::running) {
+		auto pos = controlSys.mouse.getOut().getSignal().getValue();
+		auto button = controlSys.mouse.getButtonOut().getSignal().getValue();
+		if (pos != mousePosPrev || button != mouseButtonPrev) resetTimeout();
+		if (button[0] == 1) grab(); else release();
+		mousePosPrev = pos;
+		mouseButtonPrev = button;
+		wait(0.1);
+	}
 }
 

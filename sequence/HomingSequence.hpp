@@ -6,7 +6,6 @@
 #include <eeros/safety/SafetySystem.hpp>
 #include <eeros/sequencer/Wait.hpp>
 
-#include "conditions/EmergencyCondition.hpp"
 #include "../control/DeltaControlSystem.hpp"
 #include "../safety/DeltaSafetyProperties.hpp"
 #include "../Calibration.hpp"

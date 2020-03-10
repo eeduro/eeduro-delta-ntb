@@ -2,7 +2,7 @@
 
 DeltaControlSystem::DeltaControlSystem() : 
 	mouse("/dev/input/event1"),
-	pathPlanner({1, 1, 1, 5}, {10, 10, 10, 50}, dt),
+	pathPlanner({0.2, 0.2, 0.2, 5}, {10, 10, 10, 50}, dt),
 	kM(kM1524, kM1524, kM1524, kM0816),
 	RA(RA1524, RA1524, RA1524, RA0816),
 	posSwitch(0),
@@ -26,6 +26,7 @@ DeltaControlSystem::DeltaControlSystem() :
 	voltageSetPoint({0.0,0.0,0.0,0.0}),
 	velSetPoint({0,0,0,0}),
 	accSetPoint({0,0,0,0}),
+	forceSetPoint({0,0,0,0}),
 
 	enc1("enc1"),
 	enc2("enc2"),
@@ -68,9 +69,12 @@ DeltaControlSystem::DeltaControlSystem() :
 	speedLimitation.setName("Speed limitation");
 	speedController.setName("Speed controller");
 	accSum.setName("Acceleration difference");
+	accLimitation.setName("Acceleration limitation");
 
 	inertia.setName("Inertia");
 	forceLimitation.setName("Force limitation");
+	forceSetPoint.setName("Force set point");
+	forceSum.setName("Force sum");
 	jacobi.setName("Jacobi");
 
 	torqueLimitation.setName("Torque limitations");
@@ -131,8 +135,11 @@ DeltaControlSystem::DeltaControlSystem() :
 	speedController.getOut().getSignal().setName("ddxDes");
 
 	accSum.getOut().getSignal().setName("ddxDiff");
+	accLimitation.getOut().getSignal().setName("ddxDiff");
 	inertia.getOut().getSignal().setName("fxDes");
 	forceLimitation.getOut().getSignal().setName("fxDes");
+	forceSetPoint.getOut().getSignal().setName("fs");
+	forceSum.getOut().getSignal().setName("fxDes");
 
 	jacobi.getOut().getSignal().setName("txDes");
 	torqueLimitation.getOut().getSignal().setName("txDes");
@@ -152,11 +159,11 @@ DeltaControlSystem::DeltaControlSystem() :
 	* configure blocks	  
 	* ###
 	*/
+	accLimitation.enable();
+	forceLimitation.enable();
 	torqueLimitation.enable();
-
 	posSum.negateInput(1);
 	speedSum.negateInput(2);
-
 
 	/*
 	* ###
@@ -190,14 +197,16 @@ DeltaControlSystem::DeltaControlSystem() :
 
 	accSum.getIn(0).connect(speedController.getOut());
 	accSum.getIn(1).connect(accSwitch.getOut());
+	accLimitation.getIn().connect(accSum.getOut());
 
-	inertia.getAccelerationInput().connect(accSum.getOut());
+	inertia.getAccelerationInput().connect(accLimitation.getOut());
 	inertia.getJointPosInput().connect(muxEnc.getOut());
 	inertia.getTcpPosInput().connect(directKin.getOut());
 
 	forceLimitation.getIn().connect(inertia.getOut());
-
-	jacobi.getForceInput().connect(forceLimitation.getOut());
+	forceSum.getIn(0).connect(forceLimitation.getOut());
+	forceSum.getIn(1).connect(forceSetPoint.getOut());
+	jacobi.getForceInput().connect(forceSum.getOut());
 	jacobi.getJointPosInput().connect(muxEnc.getOut());
 	jacobi.getTcpPosInput().connect(directKin.getOut());
 
@@ -256,9 +265,12 @@ DeltaControlSystem::DeltaControlSystem() :
 	timedomain.addBlock(accSwitch);
 
 	timedomain.addBlock(accSum);
+	timedomain.addBlock(accLimitation);
 
 	timedomain.addBlock(inertia);
 	timedomain.addBlock(forceLimitation);
+	timedomain.addBlock(forceSetPoint);
+	timedomain.addBlock(forceSum);
 	timedomain.addBlock(jacobi);
 	timedomain.addBlock(torqueLimitation);
 
@@ -274,7 +286,6 @@ DeltaControlSystem::DeltaControlSystem() :
 
 	timedomain.addBlock(emagVal);
 	timedomain.addBlock(emag);
-
 
 	/*
 	* ###
@@ -294,68 +305,14 @@ void DeltaControlSystem::stop() {
 	timedomain.stop();
 }
 
-void DeltaControlSystem::enableAxis() {
-	voltageSwitch.switchToInput(0);
-}
-
-void DeltaControlSystem::disableAxis() {
-	voltageSwitch.switchToInput(1);
-	voltageSetPoint.setValue({0.0,0.0,0.0,0.0});
-}
-
-void DeltaControlSystem::setVoltageForInitializing(AxisVector u) {
-	voltageSwitch.switchToInput(1);
-	voltageSetPoint.setValue(u);
-}
-
-bool DeltaControlSystem::switchToPosControl() {
-	if(homed || !allAxisStopped()){
-	  return false;
-	}
-	setVoltageForInitializing({0, 0, 0, 0});
-	homed = true;
-	return true;
-}
-
-
-void DeltaControlSystem::goToPos(double x, double y, double z, double phi) {
-	AxisVector p;
-	p << x, y, z, phi;
-	pathPlanner.gotoPoint(p);
-}
-
-AxisVector DeltaControlSystem::getTcpPos() {
-	return directKin.getOut().getSignal().getValue();
-}
-
-AxisVector DeltaControlSystem::getAxisPos() {
-	return muxEnc.getOut().getSignal().getValue();
-}
-
-bool DeltaControlSystem::allAxisStopped(double maxSpeed) {
-	for(int i = 0; i < (nofAxis-1); i++) {
-		if(posDiff.getOut().getSignal().getValue()[i] > maxSpeed) return false;
-	}
-	return true;
-}
-
-bool DeltaControlSystem::axisHomed() {
-	return homed;
-}
-
-void DeltaControlSystem::setMouseInput()
-{
-	mouse.setInitPos(directKin.getOut().getSignal().getValue());
-	pathPlanner.setInitPos(directKin.getOut().getSignal().getValue());		//disable pathplanner by setting the desired position to the current position
-	posSwitch.switchToInput(1);							// set input to mouseinput, also switches the velSwitch and accSwitch
-	voltageSwitch.switchToInput(0);
+void DeltaControlSystem::setMouseInput() {
+	pathPlanner.setInitPos(directKin.getOut().getSignal().getValue());   // disable pathplanner by setting the desired position to the current position
+	posSwitch.switchToInput(1);                                          // set input to mouseinput, also switches the velSwitch and accSwitch
 }
 
 void DeltaControlSystem::setPathPlannerInput() {
 	posSwitch.switchToInput(0);		// set input to pathplanner, also switches the velSwitch and accSwitch
-	voltageSwitch.switchToInput(0);
 }
-
 
 
 DeltaControlSystem::~DeltaControlSystem() { }
